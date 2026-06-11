@@ -13,6 +13,8 @@ test("renders arcade cockpit entry", () => {
   expect(screen.getByLabelText(/split battle arena/i)).toBeInTheDocument();
   expect(screen.getByLabelText(/portfolio statistics/i)).toBeInTheDocument();
   expect(screen.getByLabelText(/ticker selector/i)).toBeInTheDocument();
+  const laneLabels = screen.getAllByText(/^(Player Lane|AI Lane)$/i).map((label) => label.textContent);
+  expect(laneLabels).toEqual(["Player Lane", "AI Lane"]);
 });
 
 test("asks for a player name and stores it locally", async () => {

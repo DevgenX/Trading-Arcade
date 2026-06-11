@@ -279,18 +279,18 @@ function App() {
 
       <section className="battle-stage" aria-label="Split battle arena">
         <ArenaPanel
-          side="ai"
-          title={bot.name}
-          subtitle={bot.title}
+          side="player"
+          title={profile.callsign}
+          subtitle="Player Desk"
           symbol={run.market.symbol}
-          bars={aiBars}
-          trader={run.ai}
-          pnl={aiPnl}
-          status={run.summary.aiActionLabel}
-          detail={run.summary.aiTell}
-          price={aiBar.close}
-          change={getLastChange(aiBars)}
-          accent={bot.accent}
+          bars={playerBars}
+          trader={run.player}
+          pnl={playerPnl}
+          status={run.player.position.toUpperCase()}
+          detail={`${run.player.leverage}x leverage`}
+          price={playerBar.close}
+          change={priceChange}
+          accent="#45f39b"
         />
 
         <div className="center-console">
@@ -395,18 +395,18 @@ function App() {
         </div>
 
         <ArenaPanel
-          side="player"
-          title={profile.callsign}
-          subtitle="Player Desk"
+          side="ai"
+          title={bot.name}
+          subtitle={bot.title}
           symbol={run.market.symbol}
-          bars={playerBars}
-          trader={run.player}
-          pnl={playerPnl}
-          status={run.player.position.toUpperCase()}
-          detail={`${run.player.leverage}x leverage`}
-          price={playerBar.close}
-          change={priceChange}
-          accent="#45f39b"
+          bars={aiBars}
+          trader={run.ai}
+          pnl={aiPnl}
+          status={run.summary.aiActionLabel}
+          detail={run.summary.aiTell}
+          price={aiBar.close}
+          change={getLastChange(aiBars)}
+          accent={bot.accent}
         />
       </section>
 
