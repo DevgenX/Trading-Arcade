@@ -23,6 +23,7 @@ import "./App.css";
 import { MARKET_DATA } from "./services/marketData";
 
 const STORAGE_KEY = "trading-arcade-profile";
+const PROFILE_VERSION = 2;
 const DAILY_BOT_ROTATION = ["ape", "scalper", "mean-reverter", "diamond-hands"];
 const FEATURED_TICKERS = ["BTC", "ETH", "SOL", "XRP", "ADA", "AVAX", "DOT", "LINK", "LTC", "ATOM", "NEAR", "DOGE"];
 const BOTS = {
@@ -60,7 +61,9 @@ const BOTS = {
   },
 };
 const DEFAULT_PROFILE = {
+  version: PROFILE_VERSION,
   callsign: "Guest Pilot",
+  hasCompletedNamePrompt: false,
   runsPlayed: 0,
   wins: 0,
   bestScore: 0,
@@ -82,6 +85,8 @@ const DATASETS = MARKET_DATA.filter((market) => market.candles.length >= PREVIEW
 function App() {
   const [profile, setProfile] = useState(() => loadProfile());
   const [shareMessage, setShareMessage] = useState("");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [lastUnlock, setLastUnlock] = useState("");
   const initialConfig = useMemo(() => getInitialConfig(), []);
   const [config, setConfig] = useState(initialConfig);
   const [run, setRun] = useState(() => createRun(initialConfig));
@@ -124,16 +129,22 @@ function App() {
 
     setConfig(nextConfig);
     setShareMessage("");
+    setSummaryOpen(false);
+    setLastUnlock("");
   }
 
   function restartRun() {
     setRun(createRun(config));
     setShareMessage("");
+    setSummaryOpen(false);
+    setLastUnlock("");
   }
 
   function rematchBot() {
     setConfig(createConfig(randomSeed(), run.botId, config.mode, run.market.id));
     setShareMessage("");
+    setSummaryOpen(false);
+    setLastUnlock("");
   }
 
   function handleAction(action) {
@@ -144,28 +155,27 @@ function App() {
     if (nextRun.status === "finished") {
       const win = nextRun.summary.winner === "player";
       const nextUnlocked = unlockBots(profile.unlockedBots, nextRun.botId, win);
-      setProfile((current) => ({
-        ...current,
-        runsPlayed: current.runsPlayed + 1,
-        wins: current.wins + (win ? 1 : 0),
-        bestScore: Math.max(current.bestScore, Math.round(nextRun.summary.playerTotal)),
-        cumulativePnl: current.cumulativePnl + nextRun.summary.playerTotal,
-        biggestWin: Math.max(current.biggestWin, nextRun.summary.playerTotal),
-        biggestLoss: Math.min(current.biggestLoss, nextRun.summary.playerTotal),
-        streak: win ? Math.max(1, current.streak + 1) : Math.min(-1, current.streak - 1),
-        latestScore: Math.round(nextRun.summary.playerTotal),
-        unlockedBots: nextUnlocked,
-        lastBot: nextRun.botId,
-        favoriteMode: config.mode,
-      }));
+      const unlockedBotId = nextUnlocked.find((botId) => !profile.unlockedBots.includes(botId));
+      setLastUnlock(unlockedBotId ? BOTS[unlockedBotId].name : "");
+      setProfile((current) => updateFinishedProfile(current, nextRun, config.mode));
+      setSummaryOpen(true);
     }
   }
 
-  function handleCallsignChange(event) {
-    const value = event.target.value.slice(0, 18);
+  function savePlayerName(name, mode = config.mode) {
+    const callsign = sanitizeCallsign(name);
     setProfile((current) => ({
       ...current,
-      callsign: value || DEFAULT_PROFILE.callsign,
+      callsign,
+      hasCompletedNamePrompt: true,
+    }));
+    if (mode !== config.mode) startMode(mode);
+  }
+
+  function editPlayerName() {
+    setProfile((current) => ({
+      ...current,
+      hasCompletedNamePrompt: false,
     }));
   }
 
@@ -238,6 +248,7 @@ function App() {
               type="button"
               className={market.id === run.market.id ? "ticker-chip active" : "ticker-chip"}
               onClick={() => changeMarket(market.id)}
+              aria-pressed={market.id === run.market.id}
             >
               {market.symbol}
             </button>
@@ -251,10 +262,10 @@ function App() {
           </select>
         </div>
 
-        <label className="callsign-field">
+        <button type="button" className="callsign-field player-badge" onClick={editPlayerName} aria-label="Change player name">
           <UserRound size={15} />
-          <input aria-label="Callsign" value={profile.callsign} onChange={handleCallsignChange} />
-        </label>
+          <span>{profile.callsign}</span>
+        </button>
       </header>
 
       <section className="score-strip" aria-label="Portfolio statistics">
@@ -283,7 +294,7 @@ function App() {
         />
 
         <div className="center-console">
-          <div className="versus-core">
+          <div className="versus-core" aria-live="polite">
             <span>Round {Math.min(run.turn + 1, run.maxTurns)}</span>
             <strong>{isFinished ? run.summary.winnerLabel : "VS"}</strong>
             <div className="progress-track">
@@ -293,17 +304,17 @@ function App() {
           </div>
 
           <div className="mode-switcher" aria-label="Game modes">
-            <button type="button" className={config.mode === "daily" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("daily")}>
+            <button type="button" className={config.mode === "daily" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("daily")} aria-pressed={config.mode === "daily"}>
               <Flame size={14} />
               Daily
             </button>
-            <button type="button" className={config.mode === "ai" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("ai")}>
+            <button type="button" className={config.mode === "ai" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("ai")} aria-pressed={config.mode === "ai"}>
               <Bot size={14} />
-              AI
+              Bot Battle
             </button>
-            <button type="button" className={config.mode === "free" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("free")}>
+            <button type="button" className={config.mode === "free" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("free")} aria-pressed={config.mode === "free"}>
               <Play size={14} />
-              Free
+              Practice
             </button>
           </div>
 
@@ -318,6 +329,7 @@ function App() {
                   onClick={() => changeBot(entry.id)}
                   disabled={locked}
                   style={{ "--tile-accent": entry.accent }}
+                  aria-pressed={entry.id === config.botId}
                 >
                   {locked ? "LOCK" : entry.name}
                 </button>
@@ -338,6 +350,7 @@ function App() {
                   className={option === run.player.leverage ? "lever-button active" : "lever-button"}
                   onClick={() => changeLeverage(option)}
                   aria-label={`Set leverage to ${option}x`}
+                  aria-pressed={option === run.player.leverage}
                 >
                   {option}x
                 </button>
@@ -354,7 +367,7 @@ function App() {
               </button>
               <button type="button" className="action-button hold" onClick={() => handleAction("hold")}>
                 <Shield size={18} />
-                Hold
+                Next Candle
               </button>
               <button type="button" className="action-button close" onClick={() => handleAction("close")}>
                 <Target size={18} />
@@ -370,11 +383,11 @@ function App() {
             </button>
             <button type="button" className="icon-button" onClick={rematchBot} aria-label="Generate new seed">
               <Shuffle size={15} />
-              Seed
+              New Tape
             </button>
             <button type="button" className="icon-button" onClick={shareRun} aria-label="Share run">
               <Share2 size={15} />
-              Share
+              Share Replay
             </button>
           </div>
 
@@ -396,7 +409,120 @@ function App() {
           accent="#45f39b"
         />
       </section>
+
+      {!profile.hasCompletedNamePrompt ? (
+        <NameGate initialName={profile.callsign} onSave={savePlayerName} />
+      ) : null}
+
+      {summaryOpen ? (
+        <SummaryModal
+          run={run}
+          bot={bot}
+          profile={profile}
+          replayUrl={replayUrl}
+          playerAdvantage={playerAdvantage}
+          lastUnlock={lastUnlock}
+          onRestart={restartRun}
+          onNewTape={rematchBot}
+          onShare={shareRun}
+          onClose={() => setSummaryOpen(false)}
+        />
+      ) : null}
     </main>
+  );
+}
+
+function NameGate({ initialName, onSave }) {
+  const [draft, setDraft] = useState(initialName === DEFAULT_PROFILE.callsign ? "" : initialName);
+
+  function submitName(event, mode = "daily") {
+    event.preventDefault();
+    onSave(draft, mode);
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <form className="modal-card name-gate" role="dialog" aria-modal="true" aria-labelledby="name-gate-title" onSubmit={submitName}>
+        <p className="modal-kicker">Insert Coin</p>
+        <h2 id="name-gate-title">Enter your trader name</h2>
+        <p className="modal-copy">Your name stays on this device and appears on the player lane, replays, and match results.</p>
+        <label className="name-input">
+          <span>Player Name</span>
+          <input
+            autoFocus
+            maxLength={18}
+            value={draft}
+            placeholder="Guest Pilot"
+            onChange={(event) => setDraft(event.target.value)}
+            aria-label="Player name"
+          />
+        </label>
+        <div className="modal-actions">
+          <button type="submit" className="modal-button primary">
+            Start Daily Tape
+          </button>
+          <button type="button" className="modal-button" onClick={(event) => submitName(event, "ai")}>
+            Bot Battle
+          </button>
+          <button type="button" className="modal-button" onClick={(event) => submitName(event, "free")}>
+            Practice
+          </button>
+        </div>
+        <button type="button" className="text-button" onClick={() => onSave(DEFAULT_PROFILE.callsign)}>
+          Skip as Guest Pilot
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function SummaryModal({ run, bot, profile, playerAdvantage, lastUnlock, onRestart, onNewTape, onShare, onClose }) {
+  const playerTotal = getPnl(run.player);
+  const aiTotal = getPnl(run.ai);
+  const grade = getMatchGrade(playerTotal, aiTotal);
+  const finalPosition = run.player.position === "flat" ? "Flat" : `${run.player.position.toUpperCase()} ${run.player.leverage}x`;
+
+  return (
+    <div className="modal-backdrop">
+      <section className="modal-card summary-modal" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+        <p className="modal-kicker">Match Result</p>
+        <div className="summary-hero">
+          <div>
+            <h2 id="summary-title">{run.summary.winnerLabel}</h2>
+            <p className="modal-copy">{run.summary.narrative}</p>
+          </div>
+          <strong className={run.summary.winner === "player" ? "grade-win" : run.summary.winner === "ai" ? "grade-loss" : ""}>{grade}</strong>
+        </div>
+
+        <div className="summary-metrics" aria-live="polite">
+          <MetricCard label={profile.callsign} value={formatCurrency(playerTotal)} positive={playerTotal >= aiTotal} />
+          <MetricCard label={bot.name} value={formatCurrency(aiTotal)} positive={aiTotal > playerTotal} />
+          <MetricCard label="Advantage" value={formatCurrency(playerAdvantage)} positive={playerAdvantage >= 0} />
+          <MetricCard label="Final Position" value={finalPosition} />
+          <MetricCard label="Ticker" value={run.market.symbol} />
+          <MetricCard label="Seed" value={run.seed} />
+          <MetricCard label="Best Run" value={formatCurrency(profile.bestScore)} positive={profile.bestScore >= 0} />
+          <MetricCard label="Streak" value={formatStreak(profile.streak)} positive={profile.streak >= 0} />
+        </div>
+
+        {lastUnlock ? <p className="unlock-banner">Unlocked bot: {lastUnlock}</p> : null}
+
+        <div className="modal-actions">
+          <button type="button" className="modal-button primary" onClick={onRestart}>
+            Run It Back
+          </button>
+          <button type="button" className="modal-button" onClick={onNewTape}>
+            New Tape
+          </button>
+          <button type="button" className="modal-button" onClick={onShare}>
+            Share Replay
+          </button>
+          <button type="button" className="modal-button ghost" onClick={onClose}>
+            Review Board
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -798,10 +924,51 @@ function getRiskState(player) {
   return "Stable";
 }
 
+function updateFinishedProfile(profile, run, mode) {
+  const win = run.summary.winner === "player";
+  const nextUnlocked = unlockBots(profile.unlockedBots, run.botId, win);
+
+  return {
+    ...profile,
+    runsPlayed: profile.runsPlayed + 1,
+    wins: profile.wins + (win ? 1 : 0),
+    bestScore: Math.max(profile.bestScore, Math.round(run.summary.playerTotal)),
+    cumulativePnl: profile.cumulativePnl + run.summary.playerTotal,
+    biggestWin: Math.max(profile.biggestWin, run.summary.playerTotal),
+    biggestLoss: Math.min(profile.biggestLoss, run.summary.playerTotal),
+    streak: win ? Math.max(1, profile.streak + 1) : Math.min(-1, profile.streak - 1),
+    latestScore: Math.round(run.summary.playerTotal),
+    unlockedBots: nextUnlocked,
+    lastBot: run.botId,
+    favoriteMode: mode,
+  };
+}
+
+function getMatchGrade(playerTotal, aiTotal) {
+  const spread = playerTotal - aiTotal;
+  if (spread >= 350) return "S";
+  if (spread >= 160) return "A";
+  if (spread >= 1) return "B";
+  if (spread === 0) return "D";
+  return "KO";
+}
+
+function sanitizeCallsign(value) {
+  const trimmed = String(value || "").trim().slice(0, 18);
+  return trimmed || DEFAULT_PROFILE.callsign;
+}
+
 function loadProfile() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
-    return parsed ? { ...DEFAULT_PROFILE, ...parsed } : DEFAULT_PROFILE;
+    if (!parsed) return DEFAULT_PROFILE;
+    const hasLegacyName = parsed.callsign && parsed.callsign !== DEFAULT_PROFILE.callsign;
+    return {
+      ...DEFAULT_PROFILE,
+      ...parsed,
+      version: PROFILE_VERSION,
+      hasCompletedNamePrompt: parsed.hasCompletedNamePrompt ?? Boolean(hasLegacyName),
+    };
   } catch (error) {
     return DEFAULT_PROFILE;
   }
