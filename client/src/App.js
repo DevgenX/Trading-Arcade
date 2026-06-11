@@ -1,4 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  BarChart3,
+  Bot,
+  CircleDollarSign,
+  Crosshair,
+  Flame,
+  Gauge,
+  Play,
+  RotateCcw,
+  Share2,
+  Shield,
+  Shuffle,
+  Swords,
+  Target,
+  Trophy,
+  TrendingDown,
+  TrendingUp,
+  UserRound,
+  Zap,
+} from "lucide-react";
 import "./App.css";
 import { MARKET_DATA } from "./services/marketData";
 
@@ -48,6 +69,11 @@ const DEFAULT_PROFILE = {
   runsPlayed: 0,
   wins: 0,
   bestScore: 0,
+  cumulativePnl: 0,
+  biggestWin: 0,
+  biggestLoss: 0,
+  streak: 0,
+  latestScore: 0,
   unlockedBots: ["ape"],
   lastBot: "ape",
   favoriteMode: "daily",
@@ -82,7 +108,12 @@ function App() {
   const previousBar = run.segment[Math.max(0, run.currentIndex - 1)];
   const historyBars = run.segment.slice(0, run.currentIndex + 1);
   const isFinished = run.status === "finished";
-  const playerAdvantage = run.player.realized + run.player.unrealized - (run.ai.realized + run.ai.unrealized);
+  const playerPnl = run.player.realized + run.player.unrealized;
+  const aiPnl = run.ai.realized + run.ai.unrealized;
+  const playerAdvantage = playerPnl - aiPnl;
+  const runProgress = Math.round((run.turn / run.maxTurns) * 100);
+  const portfolioStats = getPortfolioStats(profile, run);
+  const priceChange = (currentBar.close - previousBar.close) / previousBar.close;
   const replayUrl = `${window.location.origin}${window.location.pathname}?seed=${encodeURIComponent(run.seed)}`;
 
   function startMode(mode) {
@@ -125,6 +156,11 @@ function App() {
         runsPlayed: current.runsPlayed + 1,
         wins: current.wins + (win ? 1 : 0),
         bestScore: Math.max(current.bestScore, Math.round(nextRun.summary.playerTotal)),
+        cumulativePnl: current.cumulativePnl + nextRun.summary.playerTotal,
+        biggestWin: Math.max(current.biggestWin, nextRun.summary.playerTotal),
+        biggestLoss: Math.min(current.biggestLoss, nextRun.summary.playerTotal),
+        streak: win ? Math.max(1, current.streak + 1) : Math.min(-1, current.streak - 1),
+        latestScore: Math.round(nextRun.summary.playerTotal),
         unlockedBots: nextUnlocked,
         lastBot: nextRun.botId,
         favoriteMode: config.mode,
@@ -187,186 +223,185 @@ function App() {
   }
 
   return (
-    <main className="arcade-shell">
-      <section className="hero-panel">
-        <div className="hero-copy">
-          <p className="eyebrow">Trading Arcade</p>
-          <h1>Guest-first market battles with deterministic replay seeds.</h1>
-          <p className="hero-text">
-            Launch straight into a run, read the tape fast, and beat visible AI behavior without
-            logins, APIs, or hidden server state.
-          </p>
-          <div className="hero-actions">
-            <button type="button" className="primary-button" onClick={() => startMode("daily")}>
-              Play Daily Run
-            </button>
-            <button type="button" className="ghost-button" onClick={() => startMode("ai")}>
-              AI Battle
-            </button>
-            <button type="button" className="ghost-button" onClick={() => startMode("free")}>
-              Free Play
-            </button>
+    <main className="arcade-shell" style={{ "--bot-accent": bot.accent }}>
+      <header className="command-bar">
+        <div className="brand-lockup">
+          <div className="brand-mark">
+            <Swords size={22} />
           </div>
-          <div className="meta-row">
-            <label className="callsign-field">
-              Callsign
-              <input value={profile.callsign} onChange={handleCallsignChange} />
-            </label>
-            <div className="seed-card">
-              <span>Replay Seed</span>
-              <strong>{run.seed}</strong>
-            </div>
-            <div className="seed-card">
-              <span>Mode</span>
-              <strong>{labelMode(config.mode)}</strong>
-            </div>
+          <div>
+            <p>Trading Arcade</p>
+            <h1>{run.market.symbol} Blitz</h1>
           </div>
         </div>
-        <div className="opponent-card" style={{ "--bot-accent": bot.accent }}>
-          <p className="opponent-type">{bot.style} Bot</p>
-          <h2>{bot.name}</h2>
-          <p className="opponent-title">{bot.title}</p>
-          <p className="opponent-flavor">{bot.flavor}</p>
-          <div className="opponent-stats">
-            <span>{run.market.symbol}</span>
-            <span>{run.summary.aiActionLabel}</span>
-          </div>
-          <p className="bot-reason">{run.summary.aiReason}</p>
+
+        <div className="mode-switcher" aria-label="Game modes">
+          <button type="button" className={config.mode === "daily" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("daily")}>
+            <Flame size={16} />
+            Daily
+          </button>
+          <button type="button" className={config.mode === "ai" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("ai")}>
+            <Bot size={16} />
+            AI Battle
+          </button>
+          <button type="button" className={config.mode === "free" ? "mode-tab active" : "mode-tab"} onClick={() => startMode("free")}>
+            <Play size={16} />
+            Free Play
+          </button>
         </div>
+
+        <label className="callsign-field">
+          <UserRound size={16} />
+          <input aria-label="Callsign" value={profile.callsign} onChange={handleCallsignChange} />
+        </label>
+      </header>
+
+      <section className="portfolio-strip" aria-label="Portfolio statistics">
+        <StatTile icon={CircleDollarSign} label="Equity" value={formatCurrency(portfolioStats.equity)} trend={portfolioStats.livePnl} />
+        <StatTile icon={Activity} label="Live PnL" value={formatCurrency(portfolioStats.livePnl)} trend={portfolioStats.livePnl} />
+        <StatTile icon={Trophy} label="Best Run" value={formatCurrency(profile.bestScore)} trend={profile.bestScore} />
+        <StatTile icon={BarChart3} label="Win Rate" value={`${portfolioStats.winRate}%`} />
+        <StatTile icon={Zap} label="Streak" value={formatStreak(profile.streak)} trend={profile.streak} />
+        <StatTile icon={Gauge} label="Risk" value={getRiskState(run.player)} />
       </section>
 
-      <section className="battle-grid">
-        <div className="battle-stage panel">
-          <div className="stage-header">
+      <section className="cockpit-grid">
+        <div className="market-panel panel">
+          <div className="market-header">
             <div>
-              <p className="stage-label">Battlefield</p>
-              <h2>{run.market.symbol}</h2>
+              <p className="section-kicker">Live Arena</p>
+              <div className="instrument-row">
+                <h2>{run.market.symbol}</h2>
+                <span className={priceChange >= 0 ? "price-pill up" : "price-pill down"}>
+                  {priceChange >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                  {formatPercent(priceChange)}
+                </span>
+              </div>
             </div>
-            <div className="stage-stats">
-              <MetricCard label="Round Timer" value={`${run.turn + 1}/${run.maxTurns}`} />
-              <MetricCard label="Risk State" value={getRiskState(run.player)} />
-              <MetricCard label="Advantage" value={formatCurrency(playerAdvantage)} positive={playerAdvantage >= 0} />
+            <div className="price-stack">
+              <span>Last Close</span>
+              <strong>{formatPrice(currentBar.close)}</strong>
+            </div>
+          </div>
+
+          <div className="progress-rail">
+            <div>
+              <span>Round {run.turn + 1}</span>
+              <strong>{run.maxTurns - run.turn} bars left</strong>
+            </div>
+            <div className="progress-track">
+              <span style={{ width: `${runProgress}%` }} />
+            </div>
+            <div>
+              <span>Advantage</span>
+              <strong className={playerAdvantage >= 0 ? "up" : "down"}>{formatCurrency(playerAdvantage)}</strong>
             </div>
           </div>
 
           <PriceChart bars={historyBars} player={run.player} ai={run.ai} />
 
-          <div className="ticker-bar">
-            <div>
-              <span>Last Close</span>
-              <strong>{formatPrice(currentBar.close)}</strong>
-            </div>
-            <div>
-              <span>Bar Change</span>
-              <strong className={currentBar.close >= previousBar.close ? "up" : "down"}>
-                {formatPercent((currentBar.close - previousBar.close) / previousBar.close)}
-              </strong>
-            </div>
-            <div>
-              <span>Replay URL</span>
-              <strong className="seed-link">{replayUrl.replace(window.location.origin, "")}</strong>
-            </div>
+          <div className="market-stats">
+            <MetricCard label="Player PnL" value={formatCurrency(playerPnl)} positive={playerPnl >= 0} />
+            <MetricCard label="AI PnL" value={formatCurrency(aiPnl)} positive={aiPnl >= 0} />
+            <MetricCard label="Position" value={run.player.position.toUpperCase()} />
+            <MetricCard label="Replay" value={run.seed} compact />
           </div>
         </div>
 
-        <div className="hud-column">
-          <div className="panel hud-panel">
-            <div className="hud-head">
-              <h3>{profile.callsign}</h3>
-              <span className="battle-chip">{run.player.position.toUpperCase()}</span>
+        <aside className="side-stack">
+          <div className="rival-panel panel">
+            <div className="rival-glow" />
+            <div className="rival-head">
+              <div>
+                <p className="section-kicker">Opponent</p>
+                <h2>{bot.name}</h2>
+              </div>
+              <span>{bot.style}</span>
             </div>
-            <ScoreLine label="PnL" value={run.player.realized + run.player.unrealized} />
-            <ScoreLine label="Bankroll" value={getEquity(run.player)} />
-            <ScoreLine label="Leverage" value={`${run.player.leverage}x`} />
-            <ScoreLine label="Win Rate" value={profile.runsPlayed ? `${Math.round((profile.wins / profile.runsPlayed) * 100)}%` : "0%"} />
+            <p className="rival-title">{bot.title}</p>
+            <p className="rival-copy">{bot.flavor}</p>
+            <div className="tell-box">
+              <span>{run.summary.aiActionLabel}</span>
+              <strong>{run.summary.aiTell}</strong>
+              <p>{run.summary.aiReason}</p>
+            </div>
           </div>
 
-          <div className="panel hud-panel enemy-panel" style={{ "--bot-accent": bot.accent }}>
-            <div className="hud-head">
-              <h3>{bot.name}</h3>
-              <span className="battle-chip enemy-chip">{run.ai.position.toUpperCase()}</span>
+          <div className="ticket-panel panel">
+            <div className="panel-title">
+              <Crosshair size={18} />
+              <h3>Order Ticket</h3>
             </div>
-            <ScoreLine label="AI PnL" value={run.ai.realized + run.ai.unrealized} />
-            <ScoreLine label="Strategy" value={bot.style} />
-            <ScoreLine label="Bias" value={run.summary.aiActionLabel} />
-            <ScoreLine label="Tell" value={run.summary.aiTell} />
-          </div>
-
-          <div className="panel action-panel">
-            <div className="lever-row">
-              {LEVERAGE_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={option === run.player.leverage ? "lever-button active" : "lever-button"}
-                  onClick={() => changeLeverage(option)}
-                >
-                  {option}x
-                </button>
-              ))}
+            <div className="leverage-control">
+              <span>Leverage</span>
+              <div className="lever-row">
+                {LEVERAGE_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={option === run.player.leverage ? "lever-button active" : "lever-button"}
+                    onClick={() => changeLeverage(option)}
+                    aria-label={`Set leverage to ${option}x`}
+                  >
+                    {option}x
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="action-grid">
               <button type="button" className="action-button buy" onClick={() => handleAction("long")}>
-                Go Long
+                <TrendingUp size={20} />
+                Long
               </button>
               <button type="button" className="action-button sell" onClick={() => handleAction("short")}>
-                Go Short
+                <TrendingDown size={20} />
+                Short
               </button>
               <button type="button" className="action-button hold" onClick={() => handleAction("hold")}>
+                <Shield size={20} />
                 Hold
               </button>
               <button type="button" className="action-button close" onClick={() => handleAction("close")}>
+                <Target size={20} />
                 Close
               </button>
             </div>
             <div className="utility-row">
-              <button type="button" className="ghost-button compact" onClick={restartRun}>
-                Instant Restart
+              <button type="button" className="icon-button" onClick={restartRun} aria-label="Restart run">
+                <RotateCcw size={18} />
+                Restart
               </button>
-              <button type="button" className="ghost-button compact" onClick={rematchBot}>
-                New Seed
+              <button type="button" className="icon-button" onClick={rematchBot} aria-label="Generate new seed">
+                <Shuffle size={18} />
+                Seed
               </button>
-              <button type="button" className="ghost-button compact" onClick={shareRun}>
-                Share Run
+              <button type="button" className="icon-button" onClick={shareRun} aria-label="Share run">
+                <Share2 size={18} />
+                Share
               </button>
             </div>
             {shareMessage ? <p className="share-output">{shareMessage}</p> : null}
           </div>
-        </div>
+        </aside>
       </section>
 
-      <section className="bottom-grid">
+      <section className="systems-grid">
         <div className="panel mode-panel">
-          <div className="panel-head">
+          <div className="panel-title">
+            <Play size={18} />
             <h3>Mode Deck</h3>
-            <p>Guest progress is saved locally.</p>
           </div>
           <div className="mode-list">
-            <ModeCard
-              title="Daily Run"
-              description="Same seed for everyone today. One chart, one bot, fixed replay."
-              active={config.mode === "daily"}
-              onClick={() => startMode("daily")}
-            />
-            <ModeCard
-              title="AI Battle"
-              description="Choose an unlocked bot and fight a visible style profile."
-              active={config.mode === "ai"}
-              onClick={() => startMode("ai")}
-            />
-            <ModeCard
-              title="Free Play"
-              description="Random seed sandbox with the Ape bot and fast restart loops."
-              active={config.mode === "free"}
-              onClick={() => startMode("free")}
-            />
+            <ModeCard title="Daily Run" description="Same seed for everyone today." active={config.mode === "daily"} onClick={() => startMode("daily")} />
+            <ModeCard title="AI Battle" description="Pick an unlocked bot profile." active={config.mode === "ai"} onClick={() => startMode("ai")} />
+            <ModeCard title="Free Play" description="Random sandbox seed." active={config.mode === "free"} onClick={() => startMode("free")} />
           </div>
         </div>
 
         <div className="panel bot-panel">
-          <div className="panel-head">
+          <div className="panel-title">
+            <Bot size={18} />
             <h3>Bot Roster</h3>
-            <p>Beat a bot to unlock the next one.</p>
           </div>
           <div className="bot-list">
             {Object.values(BOTS).map((entry) => {
@@ -378,6 +413,7 @@ function App() {
                   className={entry.id === config.botId ? "bot-tile active" : "bot-tile"}
                   onClick={() => changeBot(entry.id)}
                   disabled={locked}
+                  style={{ "--tile-accent": entry.accent }}
                 >
                   <span>{entry.name}</span>
                   <small>{locked ? "Locked" : entry.title}</small>
@@ -388,15 +424,15 @@ function App() {
         </div>
 
         <div className="panel summary-panel">
-          <div className="panel-head">
+          <div className="panel-title">
+            <Trophy size={18} />
             <h3>Run Summary</h3>
-            <p>{isFinished ? "Final scorecard ready." : "Finish the run to lock results."}</p>
           </div>
           <div className="summary-grid">
-            <MetricCard label="Player Score" value={Math.round(run.summary.playerTotal)} positive={run.summary.playerTotal >= run.summary.aiTotal} />
-            <MetricCard label="AI Score" value={Math.round(run.summary.aiTotal)} positive={run.summary.aiTotal > run.summary.playerTotal} />
+            <MetricCard label="Player" value={Math.round(run.summary.playerTotal)} positive={run.summary.playerTotal >= run.summary.aiTotal} />
+            <MetricCard label="AI" value={Math.round(run.summary.aiTotal)} positive={run.summary.aiTotal > run.summary.playerTotal} />
             <MetricCard label="Winner" value={isFinished ? run.summary.winnerLabel : "Pending"} />
-            <MetricCard label="Best Run" value={profile.bestScore} />
+            <MetricCard label="Total PnL" value={formatCurrency(profile.cumulativePnl)} positive={profile.cumulativePnl >= 0} />
           </div>
           <p className="summary-copy">{run.summary.narrative}</p>
         </div>
@@ -405,9 +441,20 @@ function App() {
   );
 }
 
-function MetricCard({ label, value, positive }) {
+function StatTile({ icon: Icon, label, value, trend }) {
+  const trendClass = trend === undefined ? "" : trend >= 0 ? " positive" : " negative";
   return (
-    <div className={positive === undefined ? "metric-card" : positive ? "metric-card positive" : "metric-card negative"}>
+    <div className={`stat-tile${trendClass}`}>
+      <Icon size={18} />
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, positive, compact }) {
+  return (
+    <div className={`${positive === undefined ? "metric-card" : positive ? "metric-card positive" : "metric-card negative"}${compact ? " compact-metric" : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
@@ -420,15 +467,6 @@ function ModeCard({ title, description, active, onClick }) {
       <strong>{title}</strong>
       <span>{description}</span>
     </button>
-  );
-}
-
-function ScoreLine({ label, value }) {
-  return (
-    <div className="score-line">
-      <span>{label}</span>
-      <strong>{typeof value === "number" ? formatCurrency(value) : value}</strong>
-    </div>
   );
 }
 
@@ -719,12 +757,6 @@ function buildNarrative(player, ai) {
   return "The battle is tight. Your open risk still matters.";
 }
 
-function labelMode(mode) {
-  if (mode === "daily") return "Daily Run";
-  if (mode === "ai") return "AI Battle";
-  return "Free Play";
-}
-
 function buildShareMessage(run, callsign, replayUrl) {
   const playerTotal = Math.round(run.player.realized + run.player.unrealized);
   const aiTotal = Math.round(run.ai.realized + run.ai.unrealized);
@@ -751,6 +783,22 @@ function formatPrice(value) {
 
 function getEquity(trader) {
   return STARTING_BANKROLL + trader.realized + trader.unrealized;
+}
+
+function getPortfolioStats(profile, run) {
+  const livePnl = run.player.realized + run.player.unrealized;
+  const wins = profile.wins || 0;
+  const played = profile.runsPlayed || 0;
+  return {
+    equity: getEquity(run.player),
+    livePnl,
+    winRate: played ? Math.round((wins / played) * 100) : 0,
+  };
+}
+
+function formatStreak(streak) {
+  if (!streak) return "0";
+  return streak > 0 ? `W${streak}` : `L${Math.abs(streak)}`;
 }
 
 function getRiskState(player) {
