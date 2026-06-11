@@ -202,6 +202,19 @@ body,
   font-weight: 900;
 }
 
+.player-badge {
+  cursor: pointer;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.player-badge span {
+  overflow: hidden;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .score-strip {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -554,12 +567,195 @@ body,
   border-radius: 10px;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 202, 58, 0.18), transparent 30%),
+    rgba(0, 0, 0, 0.74);
+  backdrop-filter: blur(12px);
+}
+
+.modal-card {
+  width: min(680px, 100%);
+  max-height: min(760px, calc(100svh - 36px));
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  color: var(--ink);
+  background:
+    linear-gradient(145deg, rgba(255, 202, 58, 0.14), transparent 34%),
+    linear-gradient(315deg, rgba(56, 223, 245, 0.12), transparent 34%),
+    rgba(15, 14, 12, 0.97);
+  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.62);
+}
+
+.name-gate {
+  display: grid;
+  gap: 14px;
+  padding: clamp(22px, 5vw, 40px);
+}
+
+.summary-modal {
+  display: grid;
+  gap: 14px;
+  padding: clamp(18px, 4vw, 30px);
+}
+
+.modal-kicker {
+  margin: 0;
+  color: var(--amber);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-card h2 {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3.2rem, 9vw, 6.2rem);
+  font-weight: 400;
+  line-height: 0.82;
+}
+
+.modal-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.name-input {
+  display: grid;
+  gap: 8px;
+}
+
+.name-input span {
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.name-input input {
+  min-height: 58px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  outline: 0;
+}
+
+.name-input input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(56, 223, 245, 0.16);
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summary-modal .modal-actions {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.modal-button,
+.text-button {
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.modal-button.primary {
+  color: #120f0a;
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+.modal-button.ghost {
+  color: var(--muted);
+}
+
+.text-button {
+  min-height: 34px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  text-decoration: underline;
+}
+
+.summary-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-hero > strong {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  color: var(--amber);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 4.8rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.summary-hero .grade-win {
+  color: var(--green);
+}
+
+.summary-hero .grade-loss {
+  color: var(--red);
+}
+
+.summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.unlock-banner {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(69, 243, 155, 0.32);
+  border-radius: 12px;
+  color: var(--green);
+  background: rgba(69, 243, 155, 0.08);
+  font-weight: 900;
+}
+
 .ticker-chip:hover,
 .mode-tab:hover,
 .bot-chip:hover,
 .lever-button:hover,
 .action-button:hover,
-.icon-button:hover {
+.icon-button:hover,
+.modal-button:hover,
+.text-button:hover {
   transform: translateY(-1px);
 }
 
@@ -570,7 +766,9 @@ body,
 .bot-chip:focus-visible,
 .lever-button:focus-visible,
 .action-button:focus-visible,
-.icon-button:focus-visible {
+.icon-button:focus-visible,
+.modal-button:focus-visible,
+.text-button:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
@@ -683,7 +881,28 @@ body,
   .action-button,
   .mode-tab,
   .icon-button {
-    min-height: 31px;
+    min-height: 44px;
     font-size: 0.7rem;
+  }
+
+  .modal-actions,
+  .summary-modal .modal-actions,
+  .summary-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-hero {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
