@@ -1,0 +1,19 @@
+{
+  "name": "trading-arcade",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Guest-first browser trading battles with deterministic replay seeds.",
+  "workspaces": [
+    "client"
+  ],
+  "scripts": {
+    "start": "npm run start --workspace trading-arcade-client",
+    "build": "npm run build --workspace trading-arcade-client",
+    "test": "CI=true npm run test --workspace trading-arcade-client -- --watch=false"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevgenX/Trading-Arcade.git"
+  },
+  "license": "MIT"
+}

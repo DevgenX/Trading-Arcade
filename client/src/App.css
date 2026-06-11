@@ -1,0 +1,443 @@
+.arcade-shell {
+  min-height: 100vh;
+  padding: 32px;
+  color: #f5f7ff;
+  background:
+    radial-gradient(circle at top left, rgba(255, 143, 63, 0.22), transparent 28%),
+    radial-gradient(circle at top right, rgba(99, 245, 200, 0.18), transparent 24%),
+    linear-gradient(180deg, #08111f 0%, #050812 55%, #090d19 100%);
+}
+
+.panel,
+.hero-panel {
+  border: 1px solid rgba(160, 197, 255, 0.12);
+  background: rgba(8, 15, 34, 0.8);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+}
+
+.hero-panel {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 24px;
+  padding: 28px;
+  border-radius: 28px;
+  margin-bottom: 24px;
+}
+
+.eyebrow,
+.stage-label,
+.opponent-type {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.74rem;
+  color: #89a8d8;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  max-width: 10ch;
+  font-size: clamp(2.8rem, 5vw, 4.7rem);
+  line-height: 0.92;
+  font-weight: 800;
+}
+
+.hero-text,
+.summary-copy,
+.opponent-flavor,
+.bot-reason,
+.panel-head p,
+.mode-card span,
+.share-output {
+  margin: 0;
+  color: #aec3eb;
+  line-height: 1.55;
+}
+
+.hero-actions,
+.utility-row,
+.meta-row,
+.opponent-stats,
+.stage-stats,
+.lever-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-actions {
+  margin: 24px 0;
+}
+
+.primary-button,
+.ghost-button,
+.action-button,
+.bot-tile,
+.mode-card,
+.lever-button {
+  border: 0;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.primary-button,
+.ghost-button {
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.primary-button {
+  color: #07131d;
+  background: linear-gradient(135deg, #ffd166, #ff8f3f);
+}
+
+.ghost-button {
+  color: #f5f7ff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.compact {
+  padding: 11px 14px;
+}
+
+.callsign-field,
+.seed-card {
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.callsign-field input {
+  border: 0;
+  outline: 0;
+  color: #f5f7ff;
+  background: transparent;
+}
+
+.seed-card span {
+  color: #89a8d8;
+  font-size: 0.82rem;
+}
+
+.opponent-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 320px;
+  padding: 24px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.16), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bot-accent) 24%, #05101d 76%), #040a16);
+}
+
+.opponent-card h2,
+.stage-header h2,
+.panel-head h3,
+.hud-head h3 {
+  margin: 0;
+}
+
+.opponent-title {
+  margin: 4px 0 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.opponent-stats {
+  margin: 18px 0 12px;
+}
+
+.opponent-stats span,
+.battle-chip,
+.metric-card span {
+  color: #e7f3ff;
+}
+
+.bot-reason {
+  margin-top: auto;
+}
+
+.battle-grid,
+.bottom-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.battle-grid {
+  grid-template-columns: 1.6fr 0.9fr;
+  margin-bottom: 24px;
+}
+
+.battle-stage,
+.hud-panel,
+.action-panel,
+.mode-panel,
+.bot-panel,
+.summary-panel {
+  border-radius: 28px;
+  padding: 22px;
+}
+
+.stage-header,
+.hud-head,
+.score-line,
+.panel-head,
+.ticker-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.chart-wrap {
+  margin: 20px 0 16px;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.grid-line {
+  stroke: rgba(161, 190, 238, 0.12);
+  stroke-width: 1;
+}
+
+.wick {
+  stroke-width: 2;
+}
+
+.wick.up,
+.candle.up {
+  stroke: #79f5ad;
+  fill: #79f5ad;
+}
+
+.wick.down,
+.candle.down {
+  stroke: #ff6b7a;
+  fill: #ff6b7a;
+}
+
+.ticker-bar {
+  flex-wrap: wrap;
+}
+
+.ticker-bar span,
+.score-line span,
+.panel-head p,
+.summary-copy,
+.share-output,
+.mode-card span,
+.bot-tile small {
+  font-size: 0.9rem;
+}
+
+.ticker-bar strong,
+.score-line strong,
+.metric-card strong,
+.seed-card strong {
+  font-size: 1rem;
+}
+
+.up,
+.positive strong {
+  color: #8cff9c;
+}
+
+.down,
+.negative strong {
+  color: #ff8a97;
+}
+
+.hud-column {
+  display: grid;
+  gap: 20px;
+}
+
+.battle-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(140, 255, 156, 0.12);
+  font-weight: 700;
+}
+
+.enemy-chip {
+  background: color-mix(in srgb, var(--bot-accent) 18%, rgba(255, 255, 255, 0.04));
+}
+
+.enemy-panel {
+  border-color: color-mix(in srgb, var(--bot-accent) 40%, rgba(255, 255, 255, 0.12));
+}
+
+.score-line {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.score-line:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.action-button,
+.lever-button {
+  border-radius: 18px;
+  padding: 14px;
+  font-weight: 700;
+}
+
+.action-button.buy {
+  background: linear-gradient(135deg, #63f5c8, #0bb28d);
+  color: #062017;
+}
+
+.action-button.sell {
+  background: linear-gradient(135deg, #ff8894, #ff5769);
+  color: #2a0710;
+}
+
+.action-button.hold {
+  background: #123758;
+  color: #dcecff;
+}
+
+.action-button.close {
+  background: #3d214a;
+  color: #ffdffb;
+}
+
+.lever-button {
+  min-width: 62px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #c8dcff;
+}
+
+.lever-button.active,
+.bot-tile.active,
+.mode-card.active {
+  outline: 2px solid #ffd166;
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.bottom-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.panel-head {
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.mode-list,
+.bot-list,
+.summary-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.mode-card,
+.bot-tile {
+  text-align: left;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f7ff;
+}
+
+.bot-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bot-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.seed-link {
+  font-family: "SFMono-Regular", ui-monospace, monospace;
+  font-size: 0.88rem;
+}
+
+.share-output {
+  margin-top: 12px;
+}
+
+.primary-button:hover,
+.ghost-button:hover,
+.action-button:hover,
+.bot-tile:hover,
+.mode-card:hover,
+.lever-button:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1120px) {
+  .hero-panel,
+  .battle-grid,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy h1 {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .arcade-shell {
+    padding: 16px;
+  }
+
+  .hero-panel,
+  .battle-stage,
+  .hud-panel,
+  .action-panel,
+  .mode-panel,
+  .bot-panel,
+  .summary-panel {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .stage-header,
+  .hud-head,
+  .panel-head,
+  .score-line {
+    flex-direction: column;
+  }
+
+  .action-grid,
+  .bot-list,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
